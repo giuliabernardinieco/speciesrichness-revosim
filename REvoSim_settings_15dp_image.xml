@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<revosim>
+		<gridX>100</gridX>
+		<gridY>100</gridY>
+		<settleTolerance>15</settleTolerance>
+		<slotsPerSquare>100</slotsPerSquare>
+		<startAge>15</startAge>
+		<dispersal>15</dispersal>
+		<food>2000</food>
+		<breedCost>500</breedCost>
+		<mutate>10</mutate>
+		<pathogenMutate>5</pathogenMutate>
+		<pathogenFrequency>5</pathogenFrequency>
+		<maxDifference>3</maxDifference>
+		<breedThreshold>500</breedThreshold>
+		<target>66</target>
+		<environmentChangeRate>100</environmentChangeRate>
+		<environmentMode>2</environmentMode>
+		<refreshRate>50</refreshRate>
+		<speciesSamples>1</speciesSamples>
+		<speciesSensitivity>2</speciesSensitivity>
+		<timeSliceConnect>5</timeSliceConnect>
+		<minSpeciesSize>0</minSpeciesSize>
+		<speciesMode>1</speciesMode>
+		<genomeSize>2</genomeSize>
+		<pathogenMode>0</pathogenMode>
+		<predationEfficiency>10</predationEfficiency>
+		<minDeltaPredatorness>0</minDeltaPredatorness>
+		<interactions>10</interactions>
+		<croppingRate>0</croppingRate>
+		<recalculateFitness>0</recalculateFitness>
+		<noSelection>0</noSelection>
+		<toroidal>1</toroidal>
+		<nonspatial>0</nonspatial>
+		<breedDifference>1</breedDifference>
+		<breedSpecies>0</breedSpecies>
+		<multiBreedList>0</multiBreedList>
+		<pathOn>0</pathOn>
+		<variableMutate>0</variableMutate>
+		<allowExcludeWithDescendants>0</allowExcludeWithDescendants>
+		<obligateSexual>1</obligateSexual>
+		<facultativeSexual>0</facultativeSexual>
+		<asexual>0</asexual>
+		<variableBreed>0</variableBreed>
+		<logging>0</logging>
+		<csvoutput>0</csvoutput>
+		<gui>0</gui>
+		<environmentInterpolate>1</environmentInterpolate>
+		<fitnessLoggingToFile>0</fitnessLoggingToFile>
+		<autowrite>1</autowrite>
+		<autowriteIndividuals>1</autowriteIndividuals>
+		<savePopulationCount>0</savePopulationCount>
+		<saveMeanFitness>0</saveMeanFitness>
+		<saveVisSysOneAsColour>0</saveVisSysOneAsColour>
+		<saveSpecies>1</saveSpecies>
+		<saveVisSysTwoAsColour>0</saveVisSysTwoAsColour>
+		<saveSettles>0</saveSettles>
+		<saveFailsSettles>0</saveFailsSettles>
+		<saveEnvironment>0</saveEnvironment>
+		<randomReseedBeforeGenetic>1</randomReseedBeforeGenetic>
+		<interactBlocks>0</interactBlocks>
+		<interactFitness>0</interactFitness>
+		<interactEnergy>0</interactEnergy>
+		<interactWithinSpecies>1</interactWithinSpecies>
+		<predationRestriction>0</predationRestriction>
+		<globalSavePath>/Users/gb4818/Desktop/</globalSavePath>
+		<headerTextEdit>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:15pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</headerTextEdit>
+		<iterationTextEdit>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:15pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</iterationTextEdit>
+		<logTextEdit>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.AppleSystemUIFont'; font-size:15pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</logTextEdit>
+		<Environment_Fitnesss_System>0</Environment_Fitnesss_System>
+		<Breed_System>01</Breed_System>
+		<Variable_Mutate_System>01</Variable_Mutate_System>
+		<Mutation_System>01</Mutation_System>
+		<Variable_Breed_System>1</Variable_Breed_System>
+		<Pathogen_System>01</Pathogen_System>
+		<Species_ID_system>01</Species_ID_system>
+		<Interaction_system>0</Interaction_system>
+		<Visualisation_System_2>0</Visualisation_System_2>
+		<Visualisation_system>1</Visualisation_system>
+		<Genome_Comparison_System>01</Genome_Comparison_System>
+</revosim>
