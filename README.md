@@ -1,4 +1,4 @@
-# :microbe: REvoSim to study the relationship between species richness and environemnt
+# :microbe: REvoSim to study the relationship between species richness and enviroment
 
 This file contains instructions on:
 
@@ -15,4 +15,11 @@ Instructions on how to install and run REvoSim can be found [here](https://revos
 
 Once the Program is installed, open it, go to Settings > Environmental settings > Change Environment file and upload the png file you created before. 
 
-To run the simulation so that all tunable parameters are set as described in the manuscript, go to Commands > Load Settings and select the 
+To run the simulation so that all tunable parameters are set as described in the manuscript, go to Commands > Load Settings and select the REvoSim_settings_15dp_image.xml file. 
+
+To produce the v2.0.0 CSV logs, as the output of your simulation, go to Logging, click on the v2.0.0 CSV logs button and tick the 'Write to file' box.
+
+The simulation is now ready to start, Click on the button 'run for' and enter 100,000 in the dialogue box.
+
+Detailed instructions on how to run REvoSim from the command line are to be found in the [REvoSim manual](https://revosim.readthedocs.io/en/latest/).
+
