@@ -26,5 +26,6 @@ Detailed instructions on how to run REvoSim from the command line are to be foun
 ## Analysing 3000 replicates
 First, we will extract the data from the 3000 logs and calculate species richness at each XY coordinate by running the fetch-data.py. This script will generate w50_15dp_grids_species_richness.csv which can be used to plot figures and calculate $\overline{S_x}$. 
 
-The figures can be generated with the 
+Figure 4 (example below) can be generated with sx-maps.py file.
+
 
