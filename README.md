@@ -23,3 +23,5 @@ The simulation is now ready to start, Click on the button 'run for' and enter 10
 
 Detailed instructions on how to run REvoSim from the command line are to be found in the [REvoSim manual](https://revosim.readthedocs.io/en/latest/).
 
+## Analysing 3000 simulations
+3000 simulations where run. The data from the 'individuals log' were extracted and stored in   file. 
