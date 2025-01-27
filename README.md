@@ -1,6 +1,6 @@
 # :microbe: REvoSim to study the relationship between species richness and environment
 
-This guide provides instructions on:
+The first part of this guide provides instructions on:
 
 - Generating the environment file.
 - Running a simulation in REvoSim with a dispersion parameter of 15.
