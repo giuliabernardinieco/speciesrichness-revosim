@@ -1,0 +1,32 @@
+#!/bin/bash
+### FIXING THE GRID FILES TO RIGHT FILE TYPE  ###
+
+# reproject species richness to wg84
+gdalwarp -t_srs EPSG:4326 Richness_10km_Birds_v7_EckertIV_no_seabirds.tif birds_no_seabirds_sr_wgs84.grd
+
+# From the CHELSA dataset, we used version 2, then we selceted climatologies>1981:2010> and then bio1, 7, and 12
+# mean annual T is 1, mean annual T range is 7, mean annual P is 12
+
+# Convert envs files to grid file
+gmt grdconvert CHELSA_bio7_1981-2010_V.2.1.tif -G7.grd
+gmt grdconvert CHELSA_bio1_1981-2010_V.2.1.tif -G1.grd
+gmt grdconvert CHELSA_bio12_1981-2010_V.2.1.tif -G12.grd
+
+# Change registration from Cartesian to Geographic
+gmt grdedit 7.grd -T -G7_geographic.grd  
+gmt grdedit 1.grd -T -G1_geographic.grd  
+gmt grdedit 12.grd -T -G12_geographic.grd  
+
+
+#### LOWER RESOLUTION OF WHOLE MAPS (OCEAN+CONTINETS) ####
+gmt grdsample 1_geographic.grd  -I10km -G1_geographic_lowres_10km.grd
+
+gmt grdsample 7_geographic.grd  -I10km -G7_geographic_lowres_10km.grd
+
+gmt grdsample 12_geographic.grd  -I10km -G12_geographic_lowres_10km.grd
+
+gmt grdsample ETOPO1_Ice_g_gmt4.grd  -I10km -GETOPO1_Ice_g_gmt4_lowres_10km.grd
+
+# to mask out ocean values you sgould create a landmask file that you will use later on in the transect-africa script. 
+# Create a land mask (1 for land, 0 for ocean)
+gmt grdlandmask -R-180/180/-90/90 -Gland_mask_forETOPO.grd -Df -N0/1/1/1/1 -I0.0166666666667
