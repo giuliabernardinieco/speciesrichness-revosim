@@ -29,16 +29,10 @@ Once REvoSim is installed, follow these steps:
 For detailed instructions on running REvoSim from the command line, refer to the [REvoSim manual](https://revosim.readthedocs.io/en/latest/).
 
 ## 3. Extracting Species Richness
-1. Extract data from the 3000 logs and calculate species richness at each XY coordinate by running the fetch-data.py script. (The logs have been produced by running simulations in batches, see section 2)
-   - The fetch-data.py script will generate w50_15dp_grids_species_richness.csv which can be used to plot figures and calculate $\overline{S_x}$. 
-2. Generate Figure 4 using the sx-maps.py script:
-   - This will create Figure 4 using data from w50_15dp_grids_species_richness.csv and one of the REvoSim individual logs produced in Step 2.
-![Figure 4](figure-4_high_res.png)
-
-## 3. Extracting Species Richness
-First, we will extract the data from the 3000 logs and calculate species richness at each XY coordinate by running the `fetch-data.py`. This script will generate `w50_15dp_grids_species_richness.csv` which can be used to plot figures and calculate $\overline{S_x}$. 
-
-Figure 4 can be generated with `sx-maps.py` file. It will be generated using data from `w50_15dp_grids_species_richness.csv` and one of the REvoSim individuals logs that was created in step 2.
+1. Extract data from the 3000 logs and calculate species richness at each XY coordinate by running the 'fetch-data.py script'. (The logs have been produced by running simulations in batches, see section 2)
+   - The 'fetch-data.py' script will generate w50_15dp_grids_species_richness.csv which can be used to plot figures and calculate $\overline{S_x}$. 
+2. Generate Figure 4 using the 'sx-maps.py' script:
+   - This will create Figure 4 using data from 'w50_15dp_grids_species_richness.csv' and one of the REvoSim individual logs produced in Step 2.
 ![Figure 4](figure-4_high_res.png)
 
 ---
