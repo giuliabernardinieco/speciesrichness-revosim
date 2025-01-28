@@ -1,3 +1,29 @@
+# Directory Overview 
+In this directory you can find the main scripts used to replicate the results. Half of the file are to replicate REvoSim results, while the other half is for the examplar equatorial transect. 
+
+### Files related to the REvoSim example  
+
+| File | Description |
+|------|-------------|
+| `environment.py` | Generates the environment file for REvoSim |
+| `REvoSim_settings_15dp_image.xml` | Settings file for REvoSim, using the same parameters as the paper (`d=15`) |
+| `fetch-data.py` | Extracts needed information from REvoSim output logs (for example this could be used to reduce the size of the logs after running the simulations on an HPC and extract only the data needed for the rest of the analysis) |
+| `sx-maps.py` | Creates figures from `fetch-data.py` output |
+| `figure-4_high_res.png` | Output figure from `sx-maps.py` |
+
+
+### Files related to the real-world example: Birds Transect  
+
+| File | Description |
+|------|-------------|
+| `correlation.py` | Computes correlation between environmental variables and species richness transect |
+| `derivative.py` | python script to calculate derivative and applying the gaussiang smoothing  |
+| `grids-housekeeping.gmt` | Converts `.tif` files to the correct format and reprojects them |
+| `transect-africa.gmt` | Executes `correlation.py` and `derivative.py` and generates the figure |
+| `paper-figure_0_200km.png` | Output figure from `transect-africa.gmt` |
+
+---
+
 # :microbe: REvoSim to study the relationship between species richness and environment
 
 The first part of this guide provides instructions on:
@@ -26,7 +52,7 @@ Once REvoSim is installed, follow these steps:
    - Click the Run For button and enter 100,000 in the dialog box.
    - To run multiple simulations in sequence, use the Batch button.
 
-For detailed instructions on running REvoSim from the command line, refer to the [REvoSim manual](https://revosim.readthedocs.io/en/latest/).
+For detailed instructions on running REvoSim from the command line, refer to the [REvoSim manual](https://revosim.readthedocs.io/en/latest/). The work presented in the manuscript was done by runnign the 3000 simulations on HPC, using command line. 
 
 ## 3. Extracting Species Richness
 1. Extract data from the 3000 logs and calculate species richness at each XY coordinate by running the `fetch-data.py script`. (The logs have been produced by running simulations in batches, see section 2)
@@ -44,7 +70,7 @@ The rest of this repository contains scripts for extracting an equatorial transe
 ## Requirements  
 To run this analysis, you need to have **GMT 6.5** installed.  
 
-## Fetching the Data  
+## 1. Fetching the Data  
 
 - **Expert range grids** (10x10 km resolution) were downloaded from [biodiversitymapping.org](https://biodiversitymapping.org/index.php/download/).  
   - The bird richness grid used: `Richness_10km_Birds_v7_EckertIV_no_seabirds.tif`  
@@ -57,33 +83,12 @@ To run this analysis, you need to have **GMT 6.5** installed.
 - **Topography data** was sourced from [NOAA](https://www.ngdc.noaa.gov/mgg/global/relief/ETOPO1/data/ice_surface/grid_registered/netcdf/).  
   - The grid used: `ETOPO1_Ice_g_gmt4.grd`  
 
-## Setup  
+## 2. Setup  
 1. Download all the required grids and place them in the same directory as the GMT and Python files.  
 2. Before running `transect-africa.gmt`, execute the housekeeping script (`grids-housekeeping.gmt`) to:  
    - Convert `.tif` files to the correct format  
-   - Ensure all projections match  
+   - Ensure all projections match
 
----
- 
-## Directory Overview  
-
-### Files related to the real-world example: Birds Transect  
-
-| File | Description |
-|------|-------------|
-| `correlation.py` | Computes correlation between environmental variables and species richness transect |
-| `derivative.py` | python script to calculate derivative and applying the gaussiang smoothing  |
-| `grids-housekeeping.gmt` | Converts `.tif` files to the correct format and reprojects them |
-| `transect-africa.gmt` | Executes `correlation.py` and `derivative.py` and generates the figure |
-| `paper-figure_0_200km.png` | Output figure from `transect-africa.gmt` |
-
-### Files related to the REvoSim example  
-
-| File | Description |
-|------|-------------|
-| `environment.py` | Generates the environment file for REvoSim |
-| `REvoSim_settings_15dp_image.xml` | Settings file for REvoSim, using the same parameters as the paper (`d=15`) |
-| `fetch-data.py` | Extracts needed information from REvoSim output logs (for example this could be used to reduce the size of the logs after running the simulations on an HPC and extract only the data needed for the rest of the analysis) |
-| `sx-maps.py` | Creates figures from `fetch-data.py` output |
-| `figure-4_high_res.png` | Output figure from `sx-maps.py` |
+## 3. Running the scripts
+From the terminal, run  `transect-africa.gmt` this should run the python scripts and produce the  `paper-figure_0_200km.png` figure.
 
