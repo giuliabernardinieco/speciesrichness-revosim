@@ -1,5 +1,5 @@
 # Directory Overview 
-In this directory you can find the main scripts used to replicate the results. Half of the file are to replicate REvoSim results, while the other half is for the examplar equatorial transect. 
+In this directory you can find the main scripts used to replicate the results. Half of the files are to replicate REvoSim results, while the other half is for the examplar equatorial transect. 
 
 ### Files related to the REvoSim example  
 
