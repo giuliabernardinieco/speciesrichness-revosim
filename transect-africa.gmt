@@ -4,71 +4,60 @@
 gmt gmtset PS_MEDIA = a1
 gmt gmtset MAP_FRAME_TYPE = plain
 
-gmt makecpt -Chot -T-20/40/0.1 > ./cmap/chelsa_temp.cpt
-gmt makecpt -Chot -T-20/40/0.1 > ./cmap/chelsa_temp.cpt
-gmt makecpt -Cetopo1 -T0/9/0.001 > etopo1_km.cpt
-gmt makecpt -Cocean -T0/5/0.001 -I > ./cmap/chelsa_ppn_m.cpt
-gmt makecpt -Cabyss -T0/678/1 -I > ./cmap/abyss_birds.cpt
-
-
-# REGION & SCALE of maps
-rgn=-R-180/180/-90/90
-scl=-JKf10c
-
-# and of chart on the right
+######### REGION & SCALE #########  
 cht=-JX15c/5c
-
-# tif files to use for maps
-sr=./birds_no_seabirds_sr_wgs84.grd #birds
-prec=./12_geographic_lowres_10km.grd # CHELSA precipitation
-topo=./ETOPO1_Ice_g_gmt4_lowres_10km.grd
-temp=./1_geographic_lowres_10km.grd # CHELSA temperature
-temprange=./7_geographic_lowres_10km.grd # CHELSA temperature range
+# region depends on the values that i will generate
 
 
-# original resolution
-prec_30arcs=./12_geographic.grd
-topo_1arcmin=./ETOPO1_Ice_g_gmt4.grd
-temp_30arcs=./1_geographic.grd
-temprange_30arcs=./7_geographic.grd
 
+######### TIF FILES #########
+#  for species richness
+sr=./tif-code-file/birds_no_seabirds_sr_wgs84.grd #birds
+
+# original resolution for environmental variables
+prec_30arcs=./tif-code-file/12_geographic.grd
+topo_1arcmin=./tif-code-file/ETOPO1_Ice_g_gmt4.grd
+temp_30arcs=./tif-code-file/1_geographic.grd
+temprange_30arcs=./tif-code-file/7_geographic.grd
+
+
+# define the continent
 continet=africa
 mkdir ./pics/$continet/
 
-# gaussian filter value
+######### GAUSSIAN FILTERING LOOP ######### 
 # filteringvalue=10
-for filteringvalue in 50 200 150; do 
+for filteringvalue in 200; do 
     echo 'starting with gaussian filtering value' $filteringvalue 'Km'
 
     ######### VALUES EXTRACTION FROM TRANSECTS #########
     for i in 0; do 
-        echo "working on" $i
-        #outfile
+        echo "working on parallel of latitude" $i "in the continent" $continet 
         
-        picps=./pics/$continet/derivatives_${i}_${filteringvalue}km.ps
-        piceps=./pics/$continet/derivatives_${i}_${filteringvalue}km.eps
+        #outfile
+        picps=./pics/$continet/paper-figure_${i}_${filteringvalue}km.ps
+        piceps=./pics/$continet/paper-figure_${i}_${filteringvalue}km.eps
+
 
         # Define latitude range (e.g., between -60 and 60 for the Americas)
         lat0=$i
         lat1=$i
 
         # Define start and end longitude
-        lon0=-19  # Start longitude
-        lon1=52   # End longitude
+        lon0=-19  
+        lon1=52   
 
         # Placing tose coordinates in a file
         touch transect.ll
         echo $lon0 $lat0 > transect.ll
         echo $lon1 $lat1 >> transect.ll
-        
 
         # generating the transect every 10 Km
-        # gmt sample1d transect.ll -I10k | gmt mapproject -Gk > transect_temp.ll # this would employ great circle distances
         gmt sample1d transect.ll -I10k -Apl | gmt mapproject -Gk > transect_temp.ll # instead this one uses Rhumb lines
 
-        # Filter out OCEANS 
+        # FILTER OUT OCEANS POINTS
         # Track points against the land mask
-        gmt grdtrack transect_temp.ll -Gland_mask_forETOPO.grd > transect_with_mask.ll
+        gmt grdtrack transect_temp.ll -G./tif-code-file/land_mask_forETOPO.grd > transect_with_mask.ll
         # Filter out points in the ocean (where landmask value is 0)
         awk '$4 == 1 {print $1, $2, $3}' transect_with_mask.ll > transect_filtered.ll
 
@@ -77,8 +66,6 @@ for filteringvalue in 50 200 150; do
         first_distance=$(awk 'NR==1 {print $3}' transect_filtered.ll)
         # Process each line, adjusting the distance column to start from zero
         awk -v first_dist="$first_distance" '{$3 = $3 - first_dist; print }' transect_filtered.ll > transect_filtered_updated_distance.ll
-
-
 
         # getting the number species of the transect and precipitations
         echo "Longitude Latitude Distance SpeciesRichness Precipitation Topography Temperature TempRange" > transect.lldspetr
@@ -102,9 +89,8 @@ for filteringvalue in 50 200 150; do
 
         # run the python script to calculate absoulte derivatives
         python3 derivative.py
-        # the script above will also calculate the correlation coefficeint
+        # the script above will also calculate the correlation coefficient between the species richness and the environmental variables
         
-
         # gaussian smoothing of the derivatives, derivative of the original function is stored in derivtaive_ens.dd
         awk 'NR > 1 {print $1, $2}' derivatives_env.dd | gmt filter1d -Fg$filteringvalue -E > prec_der_gauss.txt
         awk 'NR > 1 {print $1, $3}' derivatives_env.dd | gmt filter1d -Fg$filteringvalue -E > topo_der_gauss.txt
@@ -120,24 +106,27 @@ for filteringvalue in 50 200 150; do
             >> derivatives_env_gauss.lldspetr
         
         # create a chart of correlations 
-        python3 correlation-charts.py
+        /Library/Frameworks/Python.framework/Versions/3.11/bin/python3 correlation-charts.py
         mv correlation.jpg ./pics/$continet/correlation_${i}_${filteringvalue}.jpg
         # Clean up intermediate files
         rm prec_gauss.txt topo_gauss.txt temp_gauss.txt temprange_gauss.txt sr_gauss.txt prec_der_gauss.txt topo_der_gauss.txt temp_der_gauss.txt range_der_gauss.txt
 
+
+
+
+
+    ########### PLOTTING STARTS ###########
 
         # plot species as a function of distance, first we calculate the range
         mind=$(awk 'NR > 1 {if(min=="") {min=$3}; if($3 < min) min=$3} END {print min-10}' transect.lldspetr) 
         maxd=$(awk 'NR > 1 {if($3 > max) max=$3} END {print max+10}' transect.lldspetr)
         maxsr=$(awk 'NR > 1 {if($4 > max) max=$4} END {print max+10}' transect.lldspetr)
 
-        # calculating the maximum vale of the derivate so to set limits on plots (this is an alternative way to extract values with awk, vs the one above)
-        maxprder=$(awk 'NR > 1 {if($2 > max) max=$2} END {print max+10}' derivatives_env.dd)
-        maxtopoder=$(awk 'NR > 1 {if($3 > max) max=$3} END {print max+10}' derivatives_env.dd)
-        maxtempder=$(awk 'NR > 1 {if($4 > max) max=$4} END {print max+0}' derivatives_env.dd)
-        maxrangeder=$(awk 'NR > 1 {if($5 > max) max=$5} END {print max+0}' derivatives_env.dd)
-
-        # awk 'NR%1000==1' <  file.dxy | awk '{print $1, $2}' < file | psxy 
+        # calculating the maximum vale of the derivate (smoothed) so to set limits on plots (this is an alternative way to extract values with awk, vs the one above)
+        maxprder=$(awk 'NR > 1 {if($2 > max) max=$2} END {print max+10}' derivatives_env_gauss.lldspetr)
+        maxtopoder=$(awk 'NR > 1 {if($3 > max) max=$3} END {print max+10}' derivatives_env_gauss.lldspetr)
+        maxtempder=$(awk 'NR > 1 {if($4 > max) max=$4} END {print max+0}' derivatives_env_gauss.lldspetr)
+        maxrangeder=$(awk 'NR > 1 {if($5 > max) max=$5} END {print max+0}' derivatives_env_gauss.lldspetr)
 
         # defining the  -R flag limits
         limpr_der=-R$mind/$maxd/0/$maxprder
@@ -159,223 +148,180 @@ for filteringvalue in 50 200 150; do
         limtemp=-R$mind/$maxd/0/$maxtemp
         limrange=-R$mind/$maxd/0/$maxrange
 
+    ########## PRECIPITATION ##########
 
-        #### SR  Lat transect
-        ####     ############
+        # first plot
+        gmt psbasemap $limsr $cht -BWn -Bx1000f500 -By300f100+l"Species Richness" --FONT_LABEL=12p,seagreen --FONT_ANNOT_PRIMARY=12p,seagreen  -Y20c -K -P >> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
 
-        # plotting the map as first thing
-        gmt psbasemap $rgn $scl -Bx180f30+l"Longitude, degrees" -By30f2+l"Latitude, degrees" -BWsne -P -K -Y30c > $picps
-
-        # plotting the coastlines
-        gmt pscoast $rgn $scl -Ba0 -A10000+l -Ggray -W0.005i,black -O -K >> $picps
-
-        # Plot the species richness file with handling for NoData value (-Q flag)
-        gmt grdimage $rgn $scl $sr -C./cmap/abyss_birds.cpt  -Q -O -K >> $picps
-        # adding another coastline for better definition
-        gmt pscoast $rgn $scl -W0.005i,black -Df+ -A20000+l -O -K >> $picps
-
-        # plot transect on map
-        awk '{print $1, $2}' < transect.lldspetr | gmt psxy $rgn $scl -Ba0 -W1.5p,black -O -K >> $picps
-
-        # plot the species richness values on a separate plot on the right
-        gmt psbasemap $limsr $cht -Bx1000f100 -By100f50 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X15c -K >> $picps
-        awk 'NR > 1 {print $3, $4}' < transect.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,black -O -K >> $picps
-
-
-
-
-        #### PR  der#######
-        ####     ##########
-
-        # plotting the map as first thing
-        gmt psbasemap $rgn $scl -Bx180f30+l"Longitude, degrees" -By30f2+l"Latitude, degrees" -BWsne -O -K -Y-6c -X-15c >> $picps
-
-        # Step 1: Create the clip path for land, excluding islands smaller than 20000 kmsq
-        gmt pscoast $rgn $scl -Df+ -A20000+l -Gc -O -K >> $picps  # -Gc: Create clip path based on land excluding islands
-        # Step 2: Plot the elevation data, clipped to the land areas
-        gmt grdimage $rgn $scl $prec -C./cmap/chelsa_ppn.cpt -O -K >> $picps
-        # Step 3: End the clip path
-        gmt psclip -C -O -K >> $picps
-        # Step 4: Plot the coastlines separately, without clipping
-        gmt pscoast $rgn $scl -W0.005i,black -Df+ -A20000+l -O -K >> $picps  # Now we draw the coastlines
-
-
-        # plot transect on map
-        awk 'NR > 1 {print $1, $2}' < transect.lldspetr | gmt psxy $rgn $scl -Ba0 -W1.5p,black -O -K >> $picps
-
-        # plot the derivative values on a separate plot on the right
-        gmt psbasemap $limpr_der $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X15c -K >> $picps
-        awk 'NR > 1 {print $1, $2}' < derivatives_env.dd | gmt psxy $limpr_der $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $2}' < derivatives_env_gauss.lldspetr | gmt psxy $limpr_der $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "derivative_precipitation" {print $2}' correlation_results.txt)"
-        x=$(echo "$maxd - 300" | bc)
-        y=$(echo "$maxprder - 10" | bc)
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        x_text=$(echo "$mind + 100" | bc)
-        echo $x_text $y "Derivative" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-        # plot the precipitations values on a separate plot on the right
-        gmt psbasemap $limpr $cht -Bx1000f100 -By1000f500 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X17c -K >> $picps
-        awk 'NR > 1 {print $3, $5}' < transect.lldspetr | gmt psxy $limpr $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $3}' < transect_gauss.lldspetr | gmt psxy $limpr $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "precipitation" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Precipitation, mm" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-
-        #### EL  der#######
-        ####     ##########
-
-        # plotting the map as first thing
-        gmt psbasemap $rgn $scl -Bx180f30+l"Longitude, degrees" -By30f2+l"Latitude, degrees" -BWsne -O -K -Y-6c -X-32c >> $picps
-
-
-        # Step 1: Create the clip path for land, excluding islands smaller than 20000 kmsq
-        gmt pscoast $rgn $scl -Df+ -A20000+l -Gc -O -K >> $picps  # -Gc: Create clip path based on land excluding islands
-        # Step 2: Plot the elevation data, clipped to the land areas
-        gmt grdimage $rgn $scl $topo -Cetopo1 -O -K >> $picps
-        # Step 3: End the clip path
-        gmt psclip -C -O -K >> $picps
-        # Step 4: Plot the coastlines separately, without clipping
-        gmt pscoast $rgn $scl -W0.005i,black -Df+ -A20000+l -O -K >> $picps  # Now we draw the coastlines
-
-
-        # plot transect on map
-        awk 'NR > 1 {print $1, $2}' < transect.lldspetr | gmt psxy $rgn $scl -Ba0 -W1.5p,black -O -K >> $picps
-
-        # plot the derivative values on a separate plot on the right
-        gmt psbasemap $limtopo_der $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X15c -K >> $picps
-        awk 'NR > 1 {print $1, $3}' < derivatives_env.dd | gmt psxy $limtopo_der $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $3}' < derivatives_env_gauss.lldspetr | gmt psxy $limtopo_der $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "derivative_topography" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Derivative" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-        
-        # plot the elevation values on a separate plot on the right
-        gmt psbasemap $limtopo $cht -Bx1000f100 -By1000f500 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X17c -K >> $picps
-        awk 'NR > 1 {print $3, $6}' < transect.lldspetr | gmt psxy $limtopo $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $4}' < transect_gauss.lldspetr | gmt psxy $limtopo $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "topography" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Elevation, m" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-
-
-        #### MAT  der#######
-        ####     ##########
-
-        # plotting the map as first thing
-        gmt psbasemap $rgn $scl -Bx180f30+l"Longitude, degrees" -By30f2+l"Latitude, degrees" -BWsne -O -K -Y-6c -X-32c >> $picps
-
-
-        # Step 1: Create the clip path for land, excluding islands smaller than 20000 kmsq
-        gmt pscoast $rgn $scl -Df+ -A20000+l -Gc -O -K >> $picps  # -Gc: Create clip path based on land excluding islands
-        # Step 2: Plot the elevation data, clipped to the land areas
-        gmt grdimage $rgn $scl $temp -C./cmap/chelsa_temp.cpt -O -K >> $picps
-        # Step 3: End the clip path
-        gmt psclip -C -O -K >> $picps
-        # Step 4: Plot the coastlines separately, without clipping
-        gmt pscoast $rgn $scl -W0.005i,black -Df+ -A20000+l -O -K >> $picps  # Now we draw the coastlines
-
-
-        # plot transect on map
-        awk 'NR > 1 {print $1, $2}' < transect.lldspetr | gmt psxy $rgn $scl -Ba0 -W1.5p,black -O -K >> $picps
-
-        # plot the derivative values on a separate plot on the right
-        gmt psbasemap $limtemp_der $cht -Bx1000f100 -By0.05f0.001 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X15c -K >> $picps
-        awk 'NR > 1 {print $1, $4}' < derivatives_env.dd | gmt psxy $limtemp_der $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $4}' < derivatives_env_gauss.lldspetr | gmt psxy $limtemp_der $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "derivative_temperature" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Derivative" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-        # plot the temperature values on a separate plot on the right
-        gmt psbasemap $limtemp $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X17c -K >> $picps
-        awk 'NR > 1 {print $3, $7}' < transect.lldspetr | gmt psxy $limtemp $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $5}' < transect_gauss.lldspetr | gmt psxy $limtemp $cht -Ba0 -W0.02i,black -O -K >> $picps 
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "temperature" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Mean Annual Temperature, C" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-
-
-        #### TR  der#######
-        ####     ##########
-
-        # plotting the map as first thing
-        gmt psbasemap $rgn $scl -Bx180f30+l"Longitude, degrees" -By30f2+l"Latitude, degrees" -BWsne -O -K -Y-6c -X-32c >> $picps
-
-
-        # Step 1: Create the clip path for land, excluding islands smaller than 20000 kmsq
-        gmt pscoast $rgn $scl -Df+ -A20000+l -Gc -O -K >> $picps  # -Gc: Create clip path based on land excluding islands
-        # Step 2: Plot the elevation data, clipped to the land areas
-        gmt grdimage $rgn $scl $temprange -C./cmap/chelsa_trange.cpt -O -K >> $picps
-        # Step 3: End the clip path
-        gmt psclip -C -O -K >> $picps
-        # Step 4: Plot the coastlines separately, without clipping
-        gmt pscoast $rgn $scl -W0.005i,black -Df+ -A20000+l -O -K >> $picps  # Now we draw the coastlines
-
-
-        # plot transect on map
-        awk 'NR > 1 {print $1, $2}' < transect.lldspetr | gmt psxy $rgn $scl -Ba0 -W1.5p,black -O -K >> $picps
-
-        # plot the derivative values on a separate plot on the right
-        gmt psbasemap $limrange_der $cht -Bx1000f100+l"Distance, km" -By0.05f0.001 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X15c -K >> $picps
-        awk 'NR > 1 {print $1, $5}' < derivatives_env.dd | gmt psxy $limrange_der $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $5}' < derivatives_env_gauss.lldspetr | gmt psxy $limrange_der $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "derivative_temperature_range" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Derivative" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-        # plot the temperature values on a separate plot on the right
-        gmt psbasemap $limrange $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p  -BWS -O -X17c -K >> $picps
-        awk 'NR > 1 {print $3, $8}' < transect.lldspetr | gmt psxy $limrange $cht -Ba0 -W0.02i,gray -O -K >> $picps
-        awk 'NR > 1 {print $1, $6}' < transect_gauss.lldspetr | gmt psxy $limrange $cht -Ba0 -W0.02i,black -O -K >> $picps
-        # plot the r, correlation coeffient
-        r="r=$(awk '$1 == "temperature_range" {print $2}' correlation_results.txt)"
-        echo $x $y $r | gmt pstext $limpr_der $cht -F+f16p -N -O -K >> $picps
-        # plot text that says what plot is what
-        echo $x_text $y "Temperature Range, C" | gmt pstext $limpr_der $cht -F+f12p+jL -N -O -K >> $picps
-
-
-        # add scales on the right 
-        gmt psscale -C./cmap/abyss_birds.cpt -Dx-21c/24c+w5c/0.5c+v -B100+l"Species Richness" --FONT_ANNOT_PRIMARY=12p --FONT_LABEL=26p -O -K >> $picps
-        gmt psscale -C./cmap/chelsa_ppn_m.cpt -Dx-21c/18c+w5c/0.5c+v -B1+l"Precipitations, m" --FONT_ANNOT_PRIMARY=12p --FONT_LABEL=26p -O -K >> $picps
-        # gmt psscale -Cetopo1 -Dx16c/12c+w5c/0.5c+v -B2000+l"Elevation, m"  --FONT_ANNOT_PRIMARY=12p --FONT_LABEL=26p -O -K >> $picps
-        gmt psscale -C./cmap/etopo1_km.cpt -Dx-21c/12c+w5c/0.5c+v -B2+l"Elevation, km" --FONT_ANNOT_PRIMARY=12p --FONT_LABEL=26p -O -K >> $picps
-        gmt psscale -C./cmap/chelsa_temp.cpt -Dx-21c/6c+w5c/0.5c+v -B10+l"Mean Annual Temp" --FONT_ANNOT_PRIMARY=12p --FONT_LABEL=26p -O -K >> $picps
-        gmt psscale -C./cmap/chelsa_trange.cpt -Dx-21c/0c+w5c/0.5c+v -B10+l"Temp Range" --FONT_ANNOT_PRIMARY=12p --FONT_LABEL=26p -O >> $picps
+        # adding a secondary axis
+        gmt psbasemap $limpr $cht -Bx1000f100 -By1000f500 --FONT_ANNOT_PRIMARY=12p,darkblue -BE -O -K >> $picps
+        awk 'NR > 1 {print $1, $3}' < transect_gauss.lldspetr | gmt psxy $limpr $cht -Ba0 -W0.02i,darkblue -O -K >> $picps
         
 
-        # finishing up
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "precipitation" {print $2}' correlation_results.txt)@["
+        x_r=0.02
+        x_y=0.72
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=darkblue >> $picps
+        # plot text that says what plot is what
+        x_text=0.02
+        y_text=0.82
+        echo $x_text $y_text "Precipitation, @[Pn@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=darkblue >> $picps
+
+        # add title as ps text
+        x_title=0.5
+        y_title=1.2
+        echo $x_title $y_title "Environmental Variables" | gmt pstext -R0/1/0/1 $cht -F+f18p+jCB -W0.02i -C0.3c -N -O -K >> $picps
+
+    
+    ########## DERIVATIVE OF PRECIPITATION ##########
+
+        # first plot
+        gmt psbasemap $limsr $cht -Bx1000f500 -By300f100a --FONT_LABEL=seagreen --FONT_ANNOT_PRIMARY=12p,seagreen -Bwn -O -X17c -K>> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+
+        # adding a secondary axis
+        gmt psbasemap $limpr_der $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p,cornflowerblue --FONT_LABEL=16p,cornflowerblue -BE -O -K>> $picps
+        awk 'NR > 1 {print $1, $2}' < derivatives_env_gauss.lldspetr | gmt psxy $limpr_der $cht -Ba0 -W0.02i,cornflowerblue -O -K >> $picps
+        
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "derivative_precipitation" {print $2}' correlation_results.txt)@[*"
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=cornflowerblue >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Precipitation, @[|{\rm d}Pn/{\rm d}x|@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=cornflowerblue >> $picps
+
+
+        # add title as ps text
+        echo $x_title $y_title "Absolute Derivative of Environmental Variables" | gmt pstext -R0/1/0/1 $cht -F+f18p+jCB  -W0.02i -C0.3c -N -O -K >> $picps
+    
+
+    ########## ELEVATION ##########
+        # second plot on right
+        gmt psbasemap $limsr $cht -Bx1000f100 -By300f100a+l"Species Richness" --FONT_LABEL=12p,seagreen --FONT_ANNOT_PRIMARY=12p,seagreen -BW -O -Y-5.5c -X-17c -K >> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+
+        # adding species richness on a secondary axis
+        gmt psbasemap $limtopo $cht -Bx1000f100 -By1000f500 --FONT_ANNOT_PRIMARY=12p,darkbrown  -BE -O -K >> $picps
+        # awk 'NR > 1 {print $3, $5}' < transect.lldspetr | gmt psxy $limpr $cht -Ba0 -W0.02i,gray -O -K >> $picps
+        awk 'NR > 1 {print $1, $4}' < transect_gauss.lldspetr | gmt psxy $limtopo $cht -Ba0 -W0.02i,darkbrown -O -K >> $picps
+
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "topography" {print $2}' correlation_results.txt)@[*"
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=darkbrown >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Elevation, @[E@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=darkbrown >> $picps
+
+
+    ########## DERIVATIVE ELEVATION ##########
+
+        # first plot
+        gmt psbasemap $limsr $cht -Bx1000f100 -By300f100a --FONT_LABEL=seagreen --FONT_ANNOT_PRIMARY=12p -Bw -K -O -X17c >> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+        
+        # adding a secondary axis
+        gmt psbasemap $limtopo_der $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p,peru --FONT_LABEL=16p,peru -BE -O -K>> $picps
+        awk 'NR > 1 {print $1, $3}' < derivatives_env_gauss.lldspetr | gmt psxy $limtopo_der $cht -Ba0 -W0.02i,peru -O -K >> $picps
+        
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "derivative_topography" {print $2}' correlation_results.txt)@[*"
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=peru >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Elevation, @[|{\rm d}E/{\rm d}x|@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=peru >> $picps
+
+
+    ########## MEAN ANNUAL TEMPERATURE ##########
+        
+        # second plot on right
+        gmt psbasemap $limsr $cht -Bx1000f100 -By300f100a+l"Species Richness" --FONT_LABEL=12p,seagreen --FONT_ANNOT_PRIMARY=12p,seagreen -BW -O -X-17c -Y-5.5c -K >> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+        
+        # adding a secondary axis
+        gmt psbasemap $limtemp $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p,darkmagenta -BE -O -K>> $picps
+        awk 'NR > 1 {print $1, $5}' < transect_gauss.lldspetr | gmt psxy $limtemp $cht -Ba0 -W0.02i,darkmagenta -O -K >> $picps         
+
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "temperature" {print $2}' correlation_results.txt)@[*"
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=darkmagenta >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Temperature, @[T@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=darkmagenta >> $picps
+
+    
+    
+    
+    ########## DERIVATIVE MEAN ANNUAL TEMPERATURE ##########
+        # first plot
+        gmt psbasemap $limsr $cht -Bx1000f100 -By300f100a --FONT_LABEL=12p,seagreen --FONT_ANNOT_PRIMARY=12p -Bw -K -O -X17c >> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+
+        # adding species richness on a secondary axis
+        gmt psbasemap $limtemp_der $cht -Bx1000f100 -By0.10f0.05 --FONT_ANNOT_PRIMARY=12p,mediumorchid --FONT_LABEL=16p,mediumorchid -BE -O -K>> $picps
+        
+        # awk 'NR > 1 {print $1, $4}' < derivatives_env.dd | gmt psxy $limtemp_der $cht -Ba0 -W0.02i,gray -O -K >> $picps
+        awk 'NR > 1 {print $1, $4}' < derivatives_env_gauss.lldspetr | gmt psxy $limtemp_der $cht -Ba0 -W0.02i,mediumorchid -O -K >> $picps
+
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "derivative_temperature" {print $2}' correlation_results.txt)@[*"
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=mediumorchid >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Temperature, @[|{\rm d}T/{\rm d}x|@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=mediumorchid >> $picps
+
+
+
+
+
+    ########## TEMPERATURE RANGE ##########
+        
+        # second plot on right
+        gmt psbasemap $limsr $cht -Bx1000f500 -By300f100a+l"Species Richness" --FONT_LABEL=12p,seagreen --FONT_ANNOT_PRIMARY=12p,seagreen -BW -O -Y-5.5c -X-17c -K >> $picps
+        gmt psbasemap $limsr $cht -Bx1000f500+l"Distance, km" -By100f50 --FONT_LABEL=12p --FONT_ANNOT_PRIMARY=12p -BS -O -K >> $picps # adding another baseplot so that I can make the x label of a different colour
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+        
+        # adding a secondary axis
+        gmt psbasemap $limrange $cht -Bx1000f100 -By10f5 --FONT_ANNOT_PRIMARY=12p,orangered3 -BE -O -K>> $picps
+        awk 'NR > 1 {print $1, $6}' < transect_gauss.lldspetr | gmt psxy $limrange $cht -Ba0 -W0.02i,orangered3 -O -K >> $picps
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "temperature_range" {print $2}' correlation_results.txt)@["
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=orangered3 >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Temperature Range, @[\Delta T@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O -K --FONT=orangered3 >> $picps
+
+        
+
+    ########## DERIVATIVE TEMPERATURE RANGE ##########
+
+        # first plot
+        gmt psbasemap $limsr $cht -Bx1000f500+l"Distance, km" -By300f100a --FONT_LABEL=12p --FONT_ANNOT_PRIMARY=12p -BwS -K -O -X17c >> $picps
+        awk 'NR > 1 {print $1, $2}' < transect_gauss.lldspetr | gmt psxy $limsr $cht -Ba0 -W0.02i,seagreen -O -K >> $picps
+        
+        # adding species richness on a secondary axis
+        
+        gmt psbasemap $limrange_der $cht -Bx1000f500 -By0.05f0.01 --FONT_ANNOT_PRIMARY=12p,tomato1 --FONT_LABEL=16p,tomato1 -BE -O -K >> $picps
+        awk 'NR > 1 {print $1, $5}' < derivatives_env_gauss.lldspetr | gmt psxy $limrange_der $cht -Ba0 -W0.02i,tomato1 -O -K >> $picps
+        
+
+        # plot the r, correlation coeffient
+        r="@[r=$(awk '$1 == "derivative_temperature_range" {print $2}' correlation_results.txt)@[*"
+        echo $x_r $x_y $r | gmt pstext -R0/1/0/1 $cht -F+f17p+jLB -N -O -K --FONT=tomato1 >> $picps
+        # plot text that says what plot is what
+        echo $x_text $y_text "Temperature Range, @[|{\rm d} \Delta T/{\rm d}x|@[" | gmt pstext -R0/1/0/1 $cht -F+f16p+jLB -N -O --FONT=tomato1 >> $picps
+
+
+    # finishing up
         # Convert to JPEG
         ps2eps -f $picps
-        gmt psconvert $piceps
+        gmt psconvert $piceps -E600 -Tg -A -P
 
         echo "done with on" $i
     done 
     rm ./pics/$continet/*ps
 
 done
+mkdir ./pics/$continet/birds/paper-figure
+mv ./pics/$continet/*png ./pics/$continet/birds/paper-figure
